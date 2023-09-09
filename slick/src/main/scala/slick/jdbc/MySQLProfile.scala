@@ -263,10 +263,8 @@ trait MySQLProfile extends JdbcProfile { profile =>
     }
   }
 
-  class UpsertBuilder(ins: Insert) extends super.UpsertBuilder(ins) {
-    override def buildInsert: InsertBuilderResult = {
-      val start = buildInsertStart
-      val names = syms.filter(!_.existsColumnOption[ColumnOption.AutoInc.type]).map(_.name)
+  /*
+   val names = syms.filter(!_.existsColumnOption[ColumnOption.AutoInc.type]).map(_.name)
       val update =
         if (names.isEmpty) ""
         else s"on duplicate key update ${names.map(n => s"$n=VALUES($n)").mkString(", ")}"
@@ -276,6 +274,13 @@ trait MySQLProfile extends JdbcProfile { profile =>
       new InsertBuilderResult(table, makeSql(1), syms) {
         override def buildMultiRowInsert(size: Int) = makeSql(size)
       }
+  */
+
+  class UpsertBuilder(ins: Insert) extends super.UpsertBuilder(ins) {
+    override def buildInsert: InsertBuilderResult = {
+      val start = buildInsertStart
+      val update = softNames.map(n => s"$n=VALUES($n)").mkString(", ")
+      new InsertBuilderResult(table, s"$start values $allVars on duplicate key update $update", syms)
     }
   }
 
